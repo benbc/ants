@@ -1,7 +1,10 @@
 set term pngcairo
 set output
 
+set border 11 # no top border
+
 set xlabel 'Seconds'
+set xtics nomirror
 
 set ylabel 'Workers'
 set y2label 'Queue'
