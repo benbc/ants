@@ -4,7 +4,7 @@
 
 run() ->
     start(),
-    timer:sleep(10000),
+    timer:sleep(60000),
     stop().
 
 start() ->
@@ -17,7 +17,9 @@ stop() ->
 
 monitor() ->
     NumWorkers = length(all_processes(worker)),
-    io:format("~w workers, ~w messages.~n", [NumWorkers, queue_length()]),
+    {MegaSecs, Secs, _} = now(),
+    Now = 100000*MegaSecs + Secs,
+    io:format("~w ~w ~w~n", [Now, NumWorkers, queue_length()]),
     timer:sleep(1000),
     monitor().
 
