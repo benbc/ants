@@ -16,12 +16,12 @@ stop() ->
     ok.
 
 monitor() ->
+    monitor(unixtime()).
+monitor(Start) ->
     NumWorkers = length(all_processes(worker)),
-    {MegaSecs, Secs, _} = now(),
-    Now = 100000*MegaSecs + Secs,
-    io:format("~w ~w ~w~n", [Now, NumWorkers, queue_length()]),
+    io:format("~w ~w ~w~n", [unixtime()-Start, NumWorkers, queue_length()]),
     timer:sleep(1000),
-    monitor().
+    monitor(Start).
 
 queue() ->
     receive
@@ -104,3 +104,7 @@ is_process(Pid, Type) ->
     end.
 all_processes(Type) ->
     lists:filter(fun(Pid) -> is_process(Pid, Type) end, processes()).
+
+unixtime() ->
+    {MegaSecs, Secs, _} = now(),
+    100000*MegaSecs + Secs.

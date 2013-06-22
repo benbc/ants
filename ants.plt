@@ -1,8 +1,7 @@
 set term pngcairo
 set output
 
-set xdata time
-set timefmt '%s'
+set xlabel 'Seconds'
 
 set ylabel 'Workers'
 set y2label 'Queue'
