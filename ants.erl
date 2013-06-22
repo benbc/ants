@@ -1,13 +1,18 @@
 -module(ants).
--export([start/0, stop/0]).
+-export([run/0, start/0, stop/0]).
 -export([queue/0, launcher/0, reaper/0, worker/0, monitor/0, loader/0]).
+
+run() ->
+    start(),
+    timer:sleep(10000),
+    stop().
 
 start() ->
     lists:foreach(fun spawn_process/1, [monitor, queue, launcher, reaper, loader]),
     ok.
 
 stop() ->
-    lists:foreach(fun kill_processes/1, [launcher, reaper, queue, worker, monitor, loader]),
+    lists:foreach(fun kill_processes/1, [launcher, reaper, loader, queue, worker, monitor]),
     ok.
 
 monitor() ->

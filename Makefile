@@ -1,5 +1,9 @@
-ants.beam : ants.erl
+results: ants.beam
+	erl -noshell -s ants run -s init stop > results
+
+ants.beam: ants.erl
 	erlc ants.erl
 
-clean :
-	rm ants.beam
+.PHONY: clean
+clean:
+	rm -f ants.beam results
