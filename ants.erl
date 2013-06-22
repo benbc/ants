@@ -4,7 +4,7 @@
 
 run() ->
     start(),
-    timer:sleep(60000),
+    timer:sleep(get_runtime()),
     stop().
 
 start() ->
@@ -16,11 +16,11 @@ stop() ->
     ok.
 
 monitor() ->
-    monitor(unixtime()).
+    monitor(time_now()).
 monitor(Start) ->
     NumWorkers = length(all_processes(worker)),
-    io:format("~w ~w ~w~n", [unixtime()-Start, NumWorkers, queue_length()]),
-    timer:sleep(1000),
+    io:format("~w ~w ~w~n", [time_now()-Start, NumWorkers, queue_length()]),
+    timer:sleep(100),
     monitor(Start).
 
 queue() ->
@@ -105,6 +105,9 @@ is_process(Pid, Type) ->
 all_processes(Type) ->
     lists:filter(fun(Pid) -> is_process(Pid, Type) end, processes()).
 
-unixtime() ->
-    {MegaSecs, Secs, _} = now(),
-    100000*MegaSecs + Secs.
+time_now() ->
+    {MegaSecs, Secs, Microseconds} = now(),
+    1000000*MegaSecs + Secs + Microseconds/1000000.
+
+get_runtime() ->
+    list_to_integer(os:getenv("ANTS_RUNTIME"))*1000.
