@@ -1,13 +1,19 @@
-results.png: ants.plt e results.dat Makefile
-	cat ants.plt results.dat e results.dat | gnuplot >results.png
+out/results.png: src/ants.plt src/e tmp/results.dat Makefile | out
+	cat src/ants.plt tmp/results.dat src/e tmp/results.dat | gnuplot >out/results.png
 
-results.dat: ants.beam ants.opts Makefile
-	. ./ants.opts; \
-	erl -noshell -s ants run -s init stop > results.dat
+tmp/results.dat: tmp/ants.beam src/ants.opts Makefile | tmp
+	. ./src/ants.opts; \
+	erl -pa tmp -noshell -s ants run -s init stop > tmp/results.dat
 
-ants.beam: ants.erl Makefile
-	erlc ants.erl
+tmp/ants.beam: src/ants.erl Makefile | tmp
+	erlc -o tmp src/ants.erl
+
+tmp:
+	mkdir -p tmp
+
+out:
+	mkdir -p out
 
 .PHONY: clean
 clean: Makefile
-	rm -f *.beam results.*
+	rm -rf out tmp
