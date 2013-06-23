@@ -12,7 +12,7 @@ start() ->
     ok.
 
 stop() ->
-    lists:foreach(fun kill_processes/1, [launcher, reaper, loader, queue, worker, monitor]),
+    lists:foreach(fun kill_processes/1, [launcher, reaper, loader, worker, queue, monitor]),
     ok.
 
 monitor() ->
