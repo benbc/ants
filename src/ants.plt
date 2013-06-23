@@ -1,4 +1,4 @@
-set term pngcairo
+set terminal pngcairo size 1280,480
 set output
 
 set key above

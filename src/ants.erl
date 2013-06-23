@@ -51,11 +51,12 @@ queue_length() ->
     end.
 
 loader() ->
-    timer:sleep(5),
+    timer:sleep(get_loader_sleep()),
     queue ! {work, message},
     loader().
 
 launcher() ->
+    timer:sleep(get_regulator_sleep()),
     case queue_length() of
         N when N > 100 ->
             spawn_process(worker);
@@ -65,6 +66,7 @@ launcher() ->
     launcher().
 
 reaper() ->
+    timer:sleep(get_regulator_sleep()),
     case queue_length() of
         N when N < 10 ->
             kill_one_process(worker);
@@ -77,7 +79,7 @@ worker() ->
     queue ! {worker, self()},
     receive
         _ ->
-            timer:sleep(5000)
+            timer:sleep(get_worker_sleep())
     end,
     worker().
 
@@ -110,4 +112,16 @@ time_now() ->
     1000000*MegaSecs + Secs + Microseconds/1000000.
 
 get_runtime() ->
-    list_to_integer(os:getenv("ANTS_RUNTIME"))*1000.
+    getenv_int("ANTS_RUNTIME")*1000.
+
+get_loader_sleep() ->
+    getenv_int("ANTS_LOADER_SLEEP").
+
+get_worker_sleep() ->
+    getenv_int("ANTS_WORKER_SLEEP").
+
+get_regulator_sleep() ->
+    getenv_int("ANTS_REGULATOR_SLEEP").
+
+getenv_int(Name) ->
+    list_to_integer(os:getenv(Name)).
