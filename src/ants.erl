@@ -1,6 +1,6 @@
 -module(ants).
 -export([run/0, start/0, stop/0]).
--export([launcher/0, reaper/0, monitor/0, loader/0]).
+-export([monitor/0, loader/0]).
 
 run() ->
     start(),
@@ -8,7 +8,11 @@ run() ->
     stop().
 
 start() ->
-    lists:foreach(fun processes:spawn_one/1, [monitor, {module, core, queue}, launcher, reaper, loader]),
+    lists:foreach(fun processes:spawn_one/1, [monitor,
+                                              {module, core, queue},
+                                              {module, regulators, launcher},
+                                              {module, regulators, reaper},
+                                              loader]),
     ok.
 
 stop() ->
@@ -28,26 +32,6 @@ loader() ->
     queue ! {work, message},
     loader().
 
-launcher() ->
-    timer:sleep(get_regulator_sleep()),
-    case core:queue_length() of
-        N when N > 100 ->
-            processes:spawn_one({module, core, worker});
-        _ ->
-            ok
-    end,
-    launcher().
-
-reaper() ->
-    timer:sleep(get_regulator_sleep()),
-    case core:queue_length() of
-        N when N < 10 ->
-            processes:kill_one(worker);
-        _ ->
-            ok
-    end,
-    reaper().
-
 time_now() ->
     {MegaSecs, Secs, Microseconds} = now(),
     1000000*MegaSecs + Secs + Microseconds/1000000.
@@ -56,5 +40,3 @@ get_runtime() ->
     utils:getenv_int("ANTS_RUNTIME")*1000.
 get_loader_sleep() ->
     utils:getenv_int("ANTS_LOADER_SLEEP").
-get_regulator_sleep() ->
-    utils:getenv_int("ANTS_REGULATOR_SLEEP").
