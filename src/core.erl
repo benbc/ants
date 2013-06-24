@@ -1,5 +1,5 @@
 -module(core).
--export([queue/0, queue_length/0]).
+-export([queue/0, queue_length/0, worker/0]).
 
 queue() ->
     receive
@@ -28,3 +28,14 @@ queue_length() ->
             Work = lists:filter(fun({work, _}) -> true; (_) -> false end, Messages),
             length(Work)
     end.
+
+worker() ->
+    queue ! {worker, self()},
+    receive
+        _ ->
+            timer:sleep(get_worker_sleep())
+    end,
+    worker().
+
+get_worker_sleep() ->
+    utils:getenv_int("ANTS_WORKER_SLEEP").
