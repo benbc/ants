@@ -1,6 +1,6 @@
 -module(ants).
 -export([run/0, start/0, stop/0]).
--export([queue/0, launcher/0, reaper/0, worker/0, monitor/0, loader/0]).
+-export([launcher/0, reaper/0, worker/0, monitor/0, loader/0]).
 
 run() ->
     start(),
@@ -8,7 +8,7 @@ run() ->
     stop().
 
 start() ->
-    lists:foreach(fun spawn_process/1, [monitor, queue, launcher, reaper, loader]),
+    lists:foreach(fun spawn_process/1, [monitor, {module, core, queue}, launcher, reaper, loader]),
     ok.
 
 stop() ->
@@ -19,36 +19,9 @@ monitor() ->
     monitor(time_now()).
 monitor(Start) ->
     NumWorkers = length(all_processes(worker)),
-    io:format("~w ~w ~w~n", [time_now()-Start, NumWorkers, queue_length()]),
+    io:format("~w ~w ~w~n", [time_now()-Start, NumWorkers, core:queue_length()]),
     timer:sleep(100),
     monitor(Start).
-
-queue() ->
-    receive
-        {work, Work} ->
-            queue(Work);
-        Other ->
-            self() ! Other,
-            queue()
-    end.
-queue(Work) ->
-    receive
-        {worker, Worker} ->
-            Worker ! Work,
-            queue();
-        Other ->
-            self() ! Other,
-            queue(Work)
-    end.
-queue_length() ->
-    case whereis(queue) of
-        undefined ->
-            0;
-        Pid ->
-            {messages, Messages} = process_info(Pid, messages),
-            Work = lists:filter(fun({work, _}) -> true; (_) -> false end, Messages),
-            length(Work)
-    end.
 
 loader() ->
     timer:sleep(get_loader_sleep()),
@@ -57,7 +30,7 @@ loader() ->
 
 launcher() ->
     timer:sleep(get_regulator_sleep()),
-    case queue_length() of
+    case core:queue_length() of
         N when N > 100 ->
             spawn_process(worker);
         _ ->
@@ -67,7 +40,7 @@ launcher() ->
 
 reaper() ->
     timer:sleep(get_regulator_sleep()),
-    case queue_length() of
+    case core:queue_length() of
         N when N < 10 ->
             kill_one_process(worker);
         _ ->
