@@ -1,13 +1,10 @@
 #!/usr/bin/env escript
 % -*- erlang -*-
 
-main(Args) ->
-    compile(Args, []).
+main([Src]) ->
+    compile(Src).
 
-compile(["-pz", Dir | Rest], Dirs) ->
-    compile(Rest, [Dir | Dirs]);
-compile(Src, Dirs) ->
-    lists:foreach(fun code:add_path/1, Dirs),
+compile(Src) ->
     Root = filename:rootname(Src, ".erl"),
     case compile:file(Root, [binary, warnings_as_errors, return_errors]) of
         {ok, _, Bin} ->
