@@ -83,11 +83,13 @@ worker() ->
     end,
     worker().
 
-spawn_process(Type) ->
+spawn_process({module, Module, Type}) ->
     spawn(fun() -> catch register(Type, self()),
                    put(type, Type),
-                   apply(?MODULE, Type, [])
-          end).
+                   apply(Module, Type, [])
+          end);
+spawn_process(Type) ->
+    spawn_process({module, ?MODULE, Type}).
 kill_processes(Type) ->
     lists:foreach(fun(Pid) -> exit(Pid, kill) end, all_processes(Type)).
 kill_one_process(Type) ->
