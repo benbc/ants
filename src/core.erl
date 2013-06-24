@@ -1,5 +1,10 @@
 -module(core).
--export([queue/0, queue_length/0, worker/0]).
+-export([loader/0, queue/0, queue_length/0, worker/0]).
+
+loader() ->
+    timer:sleep(get_loader_sleep()),
+    queue ! {work, message},
+    loader().
 
 queue() ->
     receive
@@ -39,3 +44,5 @@ worker() ->
 
 get_worker_sleep() ->
     utils:getenv_int("ANTS_WORKER_SLEEP").
+get_loader_sleep() ->
+    utils:getenv_int("ANTS_LOADER_SLEEP").
