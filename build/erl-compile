@@ -1,0 +1,18 @@
+#!/usr/bin/env escript
+% -*- erlang -*-
+
+main([Src]) ->
+    Root = filename:rootname(Src, ".erl"),
+    case compile:file(Root, [binary, warnings_as_errors, return_errors]) of
+        {ok, _, Bin} ->
+            file:write_file("/dev/fd/1", Bin);
+        {error, Errors, Warnings} ->
+            log("Errors: ~p~n", [Errors]),
+            log("Warnings: ~p~n", [Warnings]),
+            halt(1)
+    end.
+
+log(_, [[]]) ->
+    ok;
+log(Format, Data) ->
+    io:format(standard_error, Format, Data).
