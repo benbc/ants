@@ -5,7 +5,7 @@ launcher() ->
     timer:sleep(get_regulator_sleep()),
     case core:queue_length() of
         N when N > 100 ->
-            processes:spawn_one({module, core, worker});
+            processes:spawn_one({core, worker});
         _ ->
             ok
     end,

@@ -1,13 +1,11 @@
 -module(processes).
 -export([spawn_one/1, kill_all/1, kill_one/1, all/1]).
 
-spawn_one({module, Module, Type}) ->
+spawn_one({Module, Type}) ->
     spawn(fun() -> catch register(Type, self()),
                    put(type, Type),
                    apply(Module, Type, [])
-          end);
-spawn_one(Type) ->
-    spawn_one({module, ants, Type}).
+          end).
 
 kill_all(Type) ->
     lists:foreach(fun(Pid) -> exit(Pid, kill) end, all(Type)).
