@@ -1,4 +1,3 @@
-/erl_crash.dump
 /out/*
 /tmp/*
 !*.make

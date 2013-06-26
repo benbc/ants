@@ -1,1 +1,3 @@
 sudo apt-get install erlang-base
+
+export ERL_CRASH_DUMP=tmp/erl_crash.dump
