@@ -1,3 +1,13 @@
-sudo apt-get install erlang-base
+# -*- mode: shell-script -*-
+
+case $OSTYPE in
+    linux*)
+        sudo apt-get install erlang-base
+        ;;
+    darwin*)
+        brew install erlang
+        brew install gnuplot --cairo
+        ;;
+esac
 
 export ERL_CRASH_DUMP=tmp/erl_crash.dump
