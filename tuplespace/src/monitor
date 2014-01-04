@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+
+import linuxtuples
+from time import sleep
+from sys import stdout
+
+ts = linuxtuples.connect()
+
+while True:
+      print(ts.dump())
+      stdout.flush()
+      sleep(5)

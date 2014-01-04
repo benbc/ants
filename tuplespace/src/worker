@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+
+import linuxtuples
+from time import sleep
+
+sleep(1)
+ts = linuxtuples.connect()
+
+while True:
+      x = ts.get((None, None))
+      sleep(3)

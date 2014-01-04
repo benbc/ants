@@ -1,0 +1,10 @@
+#!/bin/bash
+
+"$@"
+status=$?
+
+if [ $status -eq 143 ]; then
+    exit 0
+else
+    exit $status
+fi
