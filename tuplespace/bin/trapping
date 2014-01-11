@@ -3,7 +3,7 @@
 "$@"
 status=$?
 
-if [ $status -eq 143 ]; then
+if [ $status -eq 124 ]; then
     exit 0
 else
     exit $status

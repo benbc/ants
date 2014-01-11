@@ -1,14 +1,6 @@
 # -*- mode: shell-script -*-
 
-case $OSTYPE in
-    linux*)
-        sudo apt-get install timeout parallel
-        ;;
-    darwin*)
-        brew install coreutils parallel
-        PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
-        ;;
-esac
+sudo apt-get install parallel
 
 export PYTHONPATH="lib:$PYTHONPATH"
 export LINUXTUPLES_HOST=localhost
