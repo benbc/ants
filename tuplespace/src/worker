@@ -3,7 +3,6 @@
 import linuxtuples
 from time import sleep
 
-sleep(1)
 ts = linuxtuples.connect()
 
 while True:
