@@ -1,0 +1,47 @@
+#!/usr/bin/env escript
+%% -*- erlang -*-
+%%! -smp enable -sname tuplespace
+
+main(Args) ->
+    case gen_tcp:listen(5555, [binary, {active, true}]) of
+        {ok, Socket} ->
+            io:format("Ready.~n"),
+            server_loop(Socket);
+        {error, eaddrinuse} ->
+            timer:sleep(1000),
+            main(Args)
+    end.
+
+server_loop(ListenSocket) ->
+    {ok, Socket} = gen_tcp:accept(ListenSocket),
+    Handler = spawn(fun() -> handler(Socket) end),
+    gen_tcp:controlling_process(Socket, Handler),
+    server_loop(ListenSocket).
+
+handler(Socket) ->
+    receive
+        {tcp, Socket, DataIn} ->
+            {[{Command, Payload}]} = jiffy:decode(DataIn),
+            io:format("Command: ~p; Payload: ~p~n", [Command, Payload]),
+            case binary_to_atom(Command, utf8) of
+                put ->
+                    ok = put_tuple(Payload),
+                    gen_tcp:send(Socket, <<"ok\n">>);
+                get ->
+                    Result = get_tuple(Payload),
+                    Encoded = jiffy:encode({[{<<"result">>, Result}]}),
+                    gen_tcp:send(Socket, [Encoded, <<"\n">>])
+            end,
+            handler(Socket);
+        {tcp_closed, Socket} ->
+            io:format("Closed~n"),
+            ok
+    end.
+
+put_tuple(Tuple) ->
+    io:format("Put: ~p~n", [Tuple]),
+    ok.
+
+get_tuple(Pattern) ->
+    io:format("Get: ~p~n", [Pattern]),
+    [<<"some">>, <<"tuple">>, 1].

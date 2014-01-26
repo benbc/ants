@@ -1,6 +1,6 @@
 # -*- mode: shell-script -*-
 
-sudo apt-get install parallel
+sudo apt-get install parallel erlang erlang-jiffy
 
 export PYTHONPATH="lib:$PYTHONPATH"
 export LINUXTUPLES_HOST=localhost
