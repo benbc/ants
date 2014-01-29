@@ -6,29 +6,41 @@ main(_) ->
     Store = start_store(),
     start_server(Store).
 
-start_store() ->
-    spawn(fun() -> store_loop([], []) end).
+%% --- Store process ---
 
-store_loop(Tuples, Requests) ->
-    io:format("Store(Tuples=~p, Requests=~p)~n", [Tuples, Requests]),
+start_store() ->
+    spawn(fun() -> store_loop({[], []}) end).
+
+store_loop(State) ->
+    io:format("Store(State=~p)~n", [State]),
     receive
         {put, Tuple, Pid} ->
+            {RequestPids, State2} = store_put(Tuple, State),
+            lists:foreach(fun(RequestPid) -> RequestPid ! Tuple end, RequestPids),
             Pid ! ok,
-            case find_first(request_matcher(Tuple), Requests) of
-                nothing ->
-                    store_loop([Tuple|Tuples], Requests);
-                {_, RequestPid} = Request ->
-                    RequestPid ! Tuple,
-                    store_loop(Tuples, lists:delete(Request, Requests))
-            end;
+            store_loop(State2);
         {get, Pattern, Pid} ->
-            case find_first(tuple_matcher(Pattern), Tuples) of
-                nothing ->
-                    store_loop(Tuples, [{Pattern, Pid}|Requests]);
-                Tuple ->
-                    Pid ! Tuple,
-                    store_loop(lists:delete(Tuple, Tuples), Requests)
-            end
+            {Tuples, State2} = store_get(Pattern, Pid, State),
+            lists:foreach(fun(Tuple) -> Pid ! Tuple end, Tuples),
+            store_loop(State2)
+    end.
+
+%% --- Store functionality ---
+
+store_put(Tuple, {Tuples, Requests}) ->
+    case find_first(request_matcher(Tuple), Requests) of
+        nothing ->
+            {[], {[Tuple|Tuples], Requests}};
+        {_, RequestId} = Request ->
+            {[RequestId], {Tuples, lists:delete(Request, Requests)}}
+    end.
+
+store_get(Pattern, RequestId, {Tuples, Requests}) ->
+    case find_first(tuple_matcher(Pattern), Tuples) of
+        nothing ->
+            {[], {Tuples, [{Pattern, RequestId}|Requests]}};
+        Tuple ->
+            {[Tuple], {lists:delete(Tuple, Tuples), Requests}}
     end.
 
 find_first(Pred, List) ->
@@ -63,6 +75,8 @@ start_server(Store) ->
             start_server(Store)
     end.
 
+%% --- Server ---
+
 server_loop(ListenSocket, Store) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
     Handler = spawn(fun() -> handler(Socket, Store) end),
@@ -72,9 +86,9 @@ server_loop(ListenSocket, Store) ->
 handler(Socket, Store) ->
     receive
         {tcp, Socket, DataIn} ->
-            io:format("DataIn: ~p~n", [DataIn]),
-            io:format("Decoded: ~p~n", [jiffy:decode(DataIn)]),
-            case jiffy:decode(DataIn) of
+            Request = jiffy:decode(DataIn),
+            io:format("Request received: ~p~n", [Request]),
+            case Request of
                 {[{<<"put">>, Tuple}]} ->
                     Store ! {put, Tuple, self()},
                     receive
