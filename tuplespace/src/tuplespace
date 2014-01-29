@@ -2,46 +2,95 @@
 %% -*- erlang -*-
 %%! -smp enable -sname tuplespace
 
-main(Args) ->
+main(_) ->
+    Store = start_store(),
+    start_server(Store).
+
+start_store() ->
+    spawn(fun() -> store_loop([], []) end).
+
+store_loop(Tuples, Requests) ->
+    io:format("Store(Tuples=~p, Requests=~p)~n", [Tuples, Requests]),
+    receive
+        {put, Tuple, Pid} ->
+            Pid ! ok,
+            case find_first(request_matcher(Tuple), Requests) of
+                nothing ->
+                    store_loop([Tuple|Tuples], Requests);
+                {_, RequestPid} = Request ->
+                    RequestPid ! Tuple,
+                    store_loop(Tuples, lists:delete(Request, Requests))
+            end;
+        {get, Pattern, Pid} ->
+            case find_first(tuple_matcher(Pattern), Tuples) of
+                nothing ->
+                    store_loop(Tuples, [{Pattern, Pid}|Requests]);
+                Tuple ->
+                    Pid ! Tuple,
+                    store_loop(lists:delete(Tuple, Tuples), Requests)
+            end
+    end.
+
+find_first(Pred, List) ->
+    case lists:dropwhile(fun(X) -> not Pred(X) end, List) of
+        [] -> nothing;
+        [X|_] -> X
+    end.
+
+request_matcher(Tuple) ->
+    fun({Pattern, _}) -> matches(Tuple, Pattern) end.
+
+tuple_matcher(Pattern) ->
+    fun(T) -> matches(T, Pattern) end.
+
+matches(Tuple, Pattern) ->
+     same_sizes(Tuple, Pattern) andalso elements_match(Tuple, Pattern).
+
+same_sizes(List1, List2) ->
+    length(List1) == length(List2).
+
+elements_match(Tuple, Pattern) ->
+    lists:all(fun({T, P}) -> (P == null) or (P == T) end,
+              lists:zip(Tuple, Pattern)).
+
+start_server(Store) ->
     case gen_tcp:listen(5555, [binary, {active, true}]) of
         {ok, Socket} ->
             io:format("Ready.~n"),
-            server_loop(Socket);
+            server_loop(Socket, Store);
         {error, eaddrinuse} ->
             timer:sleep(1000),
-            main(Args)
+            start_server(Store)
     end.
 
-server_loop(ListenSocket) ->
+server_loop(ListenSocket, Store) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
-    Handler = spawn(fun() -> handler(Socket) end),
+    Handler = spawn(fun() -> handler(Socket, Store) end),
     gen_tcp:controlling_process(Socket, Handler),
-    server_loop(ListenSocket).
+    server_loop(ListenSocket, Store).
 
-handler(Socket) ->
+handler(Socket, Store) ->
     receive
         {tcp, Socket, DataIn} ->
-            {[{Command, Payload}]} = jiffy:decode(DataIn),
-            io:format("Command: ~p; Payload: ~p~n", [Command, Payload]),
-            case binary_to_atom(Command, utf8) of
-                put ->
-                    ok = put_tuple(Payload),
-                    gen_tcp:send(Socket, <<"ok\n">>);
-                get ->
-                    Result = get_tuple(Payload),
-                    Encoded = jiffy:encode({[{<<"result">>, Result}]}),
-                    gen_tcp:send(Socket, [Encoded, <<"\n">>])
+            io:format("DataIn: ~p~n", [DataIn]),
+            io:format("Decoded: ~p~n", [jiffy:decode(DataIn)]),
+            case jiffy:decode(DataIn) of
+                {[{<<"put">>, Tuple}]} ->
+                    Store ! {put, Tuple, self()},
+                    receive
+                        ok ->
+                            gen_tcp:send(Socket, <<"ok\n">>)
+                    end;
+                {[{<<"get">>, Pattern}]} ->
+                    Store ! {get, Pattern, self()},
+                    receive
+                        Tuple ->
+                            Encoded = jiffy:encode({[{<<"result">>, Tuple}]}),
+                            gen_tcp:send(Socket, [Encoded, <<"\n">>])
+                    end
             end,
-            handler(Socket);
+            handler(Socket, Store);
         {tcp_closed, Socket} ->
             io:format("Closed~n"),
             ok
     end.
-
-put_tuple(Tuple) ->
-    io:format("Put: ~p~n", [Tuple]),
-    ok.
-
-get_tuple(Pattern) ->
-    io:format("Get: ~p~n", [Pattern]),
-    [<<"some">>, <<"tuple">>, 1].
