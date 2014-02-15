@@ -12,7 +12,7 @@ start_store() ->
     spawn(fun() -> store_loop({[], []}) end).
 
 store_loop(State) ->
-    io:format("Store(State=~p)~n", [State]),
+    %io:format("Store(State=~p)~n", [State]),
     receive
         {put, Tuple, Pid} ->
             {RequestPids, State2} = store_put(Tuple, State),
@@ -73,9 +73,9 @@ elements_match(Tuple, Pattern) ->
               lists:zip(Tuple, Pattern)).
 
 start_server(Store) ->
-    case gen_tcp:listen(5555, [binary, {active, true}]) of
+    case gen_tcp:listen(5555, [binary, {active, false}]) of
         {ok, Socket} ->
-            io:format("Ready.~n"),
+            %io:format("Ready.~n"),
             server_loop(Socket, Store);
         {error, eaddrinuse} ->
             timer:sleep(1000),
@@ -91,10 +91,11 @@ server_loop(ListenSocket, Store) ->
     server_loop(ListenSocket, Store).
 
 handler(Socket, Store) ->
+    inet:setopts(Socket, [{active, once}]),
     receive
         {tcp, Socket, DataIn} ->
             Request = jiffy:decode(DataIn),
-            io:format("Request received: ~p~n", [Request]),
+            %io:format("Request received: ~p~n", [Request]),
             case Request of
                 {[{<<"put">>, Tuple}]} ->
                     Store ! {put, Tuple, self()},
@@ -106,6 +107,7 @@ handler(Socket, Store) ->
                     Store ! {get, Pattern, self()},
                     receive
                         Tuple ->
+                            %io:format("Result: ~p~n", [{[{<<"result">>, Tuple}]}]),
                             Encoded = jiffy:encode({[{<<"result">>, Tuple}]}),
                             gen_tcp:send(Socket, [Encoded, <<"\n">>])
                     end;
@@ -113,12 +115,13 @@ handler(Socket, Store) ->
                     Store ! {dump, Pattern, self()},
                     receive
                         Tuples ->
+                            %io:format("Result: ~p~n", [{[{<<"result">>, Tuples}]}]),
                             Encoded = jiffy:encode({[{<<"result">>, Tuples}]}),
                             gen_tcp:send(Socket, [Encoded, <<"\n">>])
                     end
             end,
             handler(Socket, Store);
         {tcp_closed, Socket} ->
-            io:format("Closed~n"),
+            %io:format("Closed~n"),
             ok
     end.
