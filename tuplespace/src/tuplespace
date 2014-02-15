@@ -22,13 +22,17 @@ store_loop(State) ->
         {get, Pattern, Pid} ->
             {Tuples, State2} = store_get(Pattern, Pid, State),
             lists:foreach(fun(Tuple) -> Pid ! Tuple end, Tuples),
-            store_loop(State2)
+            store_loop(State2);
+        {dump, Pattern, Pid} ->
+            Tuples = store_dump(Pattern, State),
+            Pid ! Tuples,
+            store_loop(State)
     end.
 
 %% --- Store functionality ---
 
 store_put(Tuple, {Tuples, Requests}) ->
-    case find_first(request_matcher(Tuple), Requests) of
+    case find(request_matcher(Tuple), Requests) of
         nothing ->
             {[], {[Tuple|Tuples], Requests}};
         {_, RequestId} = Request ->
@@ -36,14 +40,17 @@ store_put(Tuple, {Tuples, Requests}) ->
     end.
 
 store_get(Pattern, RequestId, {Tuples, Requests}) ->
-    case find_first(tuple_matcher(Pattern), Tuples) of
+    case find(tuple_matcher(Pattern), Tuples) of
         nothing ->
             {[], {Tuples, [{Pattern, RequestId}|Requests]}};
         Tuple ->
             {[Tuple], {lists:delete(Tuple, Tuples), Requests}}
     end.
 
-find_first(Pred, List) ->
+store_dump(Pattern, {Tuples, _}) ->
+    lists:filter(tuple_matcher(Pattern), Tuples).
+
+find(Pred, List) ->
     case lists:dropwhile(fun(X) -> not Pred(X) end, List) of
         [] -> nothing;
         [X|_] -> X
@@ -100,6 +107,13 @@ handler(Socket, Store) ->
                     receive
                         Tuple ->
                             Encoded = jiffy:encode({[{<<"result">>, Tuple}]}),
+                            gen_tcp:send(Socket, [Encoded, <<"\n">>])
+                    end;
+                {[{<<"dump">>, Pattern}]} ->
+                    Store ! {dump, Pattern, self()},
+                    receive
+                        Tuples ->
+                            Encoded = jiffy:encode({[{<<"result">>, Tuples}]}),
                             gen_tcp:send(Socket, [Encoded, <<"\n">>])
                     end
             end,
