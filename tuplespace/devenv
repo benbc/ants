@@ -2,7 +2,4 @@
 
 sudo apt-get install parallel erlang erlang-jiffy
 
-export PYTHONPATH="lib:$PYTHONPATH"
-export LINUXTUPLES_HOST=localhost
-export LINUXTUPLES_PORT=5555
 export PATH="bin:$PATH"

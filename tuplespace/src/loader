@@ -1,11 +1,8 @@
-#!/usr/bin/env python
+#!/bin/bash -eu
 
-import linuxtuples
-from time import sleep
-import uuid
+sleep 2s
 
-ts = linuxtuples.connect()
-
-for x in range(1000):
-      ts.put((1, x))
-      sleep(2)
+for i in {0..1000}; do
+    echo "{\"put\": [1, $i]}" | nc localhost 5555
+    sleep 2s
+done

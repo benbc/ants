@@ -1,4 +1,4 @@
-tuple_server ${LINUXTUPLES_PORT}
+src/tuplespace
 src/monitor
 src/loader
 src/worker
