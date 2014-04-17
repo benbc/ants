@@ -72,8 +72,10 @@ elements_match(Tuple, Pattern) ->
     lists:all(fun({T, P}) -> (P == null) or (P == T) end,
               lists:zip(Tuple, Pattern)).
 
+%% --- Server ---
+
 start_server(Store) ->
-    case gen_tcp:listen(5555, [binary, {active, false}]) of
+    case gen_tcp:listen(5555, [binary, {active, true}]) of
         {ok, Socket} ->
             server_loop(Socket, Store);
         {error, eaddrinuse} ->
@@ -81,42 +83,39 @@ start_server(Store) ->
             start_server(Store)
     end.
 
-%% --- Server ---
-
 server_loop(ListenSocket, Store) ->
     {ok, Socket} = gen_tcp:accept(ListenSocket),
-    Handler = spawn(fun() -> handler(Socket, Store) end),
+    Handler = spawn(fun() -> handle_request(Socket, Store) end),
     gen_tcp:controlling_process(Socket, Handler),
     server_loop(ListenSocket, Store).
 
-handler(Socket, Store) ->
-    inet:setopts(Socket, [{active, once}]),
+handle_request(Socket, Store) ->
     receive
         {tcp, Socket, DataIn} ->
             Request = jiffy:decode(DataIn),
             case Request of
                 {[{<<"put">>, Tuple}]} ->
-                    Store ! {put, Tuple, self()},
-                    receive
-                        {store, ok} ->
-                            gen_tcp:send(Socket, <<"ok\n">>)
-                    end;
+                    Store ! {put, Tuple, self()};
                 {[{<<"get">>, Pattern}]} ->
-                    Store ! {get, Pattern, self()},
-                    receive
-                        {store, Tuple} ->
-                            Encoded = jiffy:encode({[{<<"result">>, Tuple}]}),
-                            gen_tcp:send(Socket, [Encoded, <<"\n">>])
-                    end;
+                    Store ! {get, Pattern, self()};
                 {[{<<"dump">>, Pattern}]} ->
-                    Store ! {dump, Pattern, self()},
-                    receive
-                        {store, Tuples} ->
-                            Encoded = jiffy:encode({[{<<"result">>, Tuples}]}),
-                            gen_tcp:send(Socket, [Encoded, <<"\n">>])
-                    end
+                    Store ! {dump, Pattern, self()}
             end,
-            handler(Socket, Store);
+            handle_result(Socket);
+        {tcp_closed, Socket} ->
+            ok
+    end.
+
+handle_result(Socket) ->
+    receive
+        {store, ok} ->
+            gen_tcp:send(Socket, <<"ok\n">>);
+        {store, Tuple} ->
+            Encoded = jiffy:encode({[{<<"result">>, Tuple}]}),
+            gen_tcp:send(Socket, [Encoded, <<"\n">>]);
+        {store, Tuples} ->
+            Encoded = jiffy:encode({[{<<"result">>, Tuples}]}),
+            gen_tcp:send(Socket, [Encoded, <<"\n">>]);
         {tcp_closed, Socket} ->
             ok
     end.
