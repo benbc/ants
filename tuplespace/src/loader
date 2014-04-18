@@ -1,8 +1,14 @@
-#!/bin/bash -eu
+#!/usr/bin/env python
 
-sleep 2s
+from __future__ import print_function
+from time import sleep
+import ezsocket
 
-for i in {0..1000}; do
-    echo "{\"put\": [1, $i]}" | nc localhost 5555
-    sleep 2s
-done
+sleep(2)
+
+for i in range(0, 1000):
+    socket = ezsocket.Socket('localhost', 5555)
+    socket.send('{"put": [1, %s]}' % i)
+    print(socket.receive(), end='')
+    socket.close()
+    sleep(2)

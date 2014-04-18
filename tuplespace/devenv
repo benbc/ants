@@ -3,3 +3,4 @@
 sudo apt-get install parallel erlang erlang-jiffy
 
 export PATH="bin:$PATH"
+export PYTHONPATH="$PYTHONPATH:src/lib"

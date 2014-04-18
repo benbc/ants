@@ -1,8 +1,14 @@
-#!/bin/bash -eu
+#!/usr/bin/env python
 
-sleep 2s
+from __future__ import print_function
+from time import sleep
+import ezsocket
 
-while true; do
-    echo "{\"dump\": [null, null]}" | nc localhost 5555
-    sleep 5s
-done
+sleep(2)
+
+while True:
+    socket = ezsocket.Socket('localhost', 5555)
+    socket.send('{"dump": [null, null]}')
+    print(socket.receive(), end='')
+    socket.close()
+    sleep(5)
