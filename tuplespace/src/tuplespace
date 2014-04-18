@@ -75,7 +75,9 @@ elements_match(Tuple, Pattern) ->
 %% --- Server ---
 
 start_server(Store) ->
-    case gen_tcp:listen(5555, [binary, {active, true}]) of
+    case gen_tcp:listen(5555, [binary,
+                               {active, true},
+                               {packet, 2}]) of
         {ok, Socket} ->
             server_loop(Socket, Store);
         {error, eaddrinuse} ->
