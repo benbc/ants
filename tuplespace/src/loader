@@ -9,6 +9,6 @@ sleep(2)
 for i in range(0, 1000):
     socket = ezsocket.Socket('localhost', 5555)
     socket.send('{"put": [1, %s]}' % i)
-    print(socket.receive(), end='')
+    print(socket.receive())
     socket.close()
     sleep(2)

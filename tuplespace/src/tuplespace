@@ -109,13 +109,13 @@ handle_request(Socket, Store) ->
 handle_result(Socket) ->
     receive
         {store, ok} ->
-            gen_tcp:send(Socket, <<"ok\n">>);
+            gen_tcp:send(Socket, <<"ok">>);
         {store, Tuple} ->
             Encoded = jiffy:encode({[{<<"result">>, Tuple}]}),
-            gen_tcp:send(Socket, [Encoded, <<"\n">>]);
+            gen_tcp:send(Socket, Encoded);
         {store, Tuples} ->
             Encoded = jiffy:encode({[{<<"result">>, Tuples}]}),
-            gen_tcp:send(Socket, [Encoded, <<"\n">>]);
+            gen_tcp:send(Socket, Encoded);
         {tcp_closed, Socket} ->
             ok
     end.

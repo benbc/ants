@@ -9,6 +9,6 @@ sleep(2)
 while True:
     socket = ezsocket.Socket('localhost', 5555)
     socket.send('{"dump": [null, null]}')
-    print(socket.receive(), end='')
+    print(socket.receive())
     socket.close()
     sleep(5)
