@@ -2,12 +2,12 @@
 
 from __future__ import print_function
 from time import sleep
-import ezsocket
+import easy_tcp
 
 sleep(2)
 
 while True:
-    socket = ezsocket.Socket('localhost', 5555)
+    socket = easy_tcp.Socket('localhost', 5555)
     socket.send('{"get": [null, null]}')
     print(socket.receive())
     socket.close()
