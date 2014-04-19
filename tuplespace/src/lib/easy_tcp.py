@@ -22,20 +22,17 @@ class Socket:
     def __exit__(self, type, value, traceback):
         self._socket.close()
 
-def _receive_header(socket, header):
-    total = header + socket.recv(_RECV_SIZE)
-    if len(total) < 2:
-        return _receive_header(socket, total)
-    else:
-        header = total[:2]
-        rest = total[2:]
+def _receive_header(socket, packet):
+    if len(packet) >= 2:
+        header = packet[:2]
+        message = packet[2:]
         (length,) = struct.unpack(_HEADER_FORMAT, header)
-        return _receive_message(socket, length, rest)
+        return _receive_message(socket, length, message)
+    return _receive_header(socket, packet + socket.recv(_RECV_SIZE))
 
 def _receive_message(socket, length, message):
-    if len(message) < length:
-        return _receive_message(socket,
-                                length,
-                                message + socket.recv(_RECV_SIZE))
-    else:
+    if len(message) >= length:
         return message[:length]
+    return _receive_message(socket,
+                            length,
+                            message + socket.recv(_RECV_SIZE))
