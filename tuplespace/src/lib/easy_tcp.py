@@ -5,8 +5,8 @@ _HEADER_FORMAT = '!H'
 
 class Socket:
     def __init__(self, address, port):
+        self._address, self._port = address, port
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.connect((address, port))
 
     def send(self, message):
         packet = struct.pack(_HEADER_FORMAT, len(message)) + message
@@ -15,7 +15,11 @@ class Socket:
     def receive(self):
         return _receive_header(self._socket, '')
 
-    def close(self):
+    def __enter__(self):
+        self._socket.connect((self._address, self._port))
+        return self
+
+    def __exit__(self, type, value, traceback):
         self._socket.close()
 
 def _receive_header(socket, header):

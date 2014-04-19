@@ -7,8 +7,7 @@ import easy_tcp
 sleep(2)
 
 while True:
-    socket = easy_tcp.Socket('localhost', 5555)
-    socket.send('{"dump": [null, null]}')
-    print(socket.receive())
-    socket.close()
+    with easy_tcp.Socket('localhost', 5555) as socket:
+        socket.send('{"dump": [null, null]}')
+        print(socket.receive())
     sleep(5)
