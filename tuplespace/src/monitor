@@ -2,12 +2,13 @@
 
 from __future__ import print_function
 from time import sleep
+import json
 import easy_tcp
 
 sleep(2)
 
 while True:
     with easy_tcp.Socket('localhost', 5555) as socket:
-        socket.send('{"dump": [null, null]}')
+        socket.send(json.dumps({'dump': [None, None]}))
         print(socket.receive())
     sleep(5)

@@ -2,12 +2,13 @@
 
 from __future__ import print_function
 from time import sleep
+import json
 import easy_tcp
 
 sleep(2)
 
 for i in range(0, 1000):
     with easy_tcp.Socket('localhost', 5555) as socket:
-        socket.send('{"put": [1, %s]}' % i)
+        socket.send(json.dumps({'put': [1, i]}))
         print(socket.receive())
     sleep(2)
