@@ -9,6 +9,7 @@ sleep(2)
 
 while True:
     with easy_tcp.Socket('localhost', 5555) as socket:
-        socket.send(json.dumps({'get': [None, None]}))
-        print(socket.receive())
+        socket.send(json.dumps({'get': ['job', None]}))
+        response = json.loads(socket.receive())
+        print('Done: %s' % response['result'][1])
     sleep(3)

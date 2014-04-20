@@ -9,6 +9,9 @@ sleep(2)
 
 for i in range(0, 1000):
     with easy_tcp.Socket('localhost', 5555) as socket:
-        socket.send(json.dumps({'put': [1, i]}))
-        print(socket.receive())
+        socket.send(json.dumps({'put': ['job', i]}))
+        result = socket.receive()
+        if result != 'ok':
+            raise Exception('Failed to submit job %s (%s)' % (i, result))
+        print('Submitted: %s' % i)
     sleep(2)
