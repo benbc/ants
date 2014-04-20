@@ -14,4 +14,4 @@ for i in range(0, 1000):
         if result != 'ok':
             raise Exception('Failed to submit job %s (%s)' % (i, result))
         print('Submitted: %s' % i)
-    sleep(2)
+    sleep(0.2)

@@ -12,4 +12,4 @@ while True:
         socket.send(json.dumps({'dump': ['job', None]}))
         response = json.loads(socket.receive())
         print('%s jobs outstanding' % len(response['result']))
-    sleep(5)
+    sleep(0.5)
