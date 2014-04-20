@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/python -u
 
 from __future__ import print_function
 from time import sleep
+from datetime import datetime
 import json
 import easy_tcp
 
@@ -11,5 +12,6 @@ while True:
     with easy_tcp.Socket('localhost', 5555) as socket:
         socket.send(json.dumps({'dump': ['job', None]}))
         response = json.loads(socket.receive())
-        print('%s jobs outstanding' % len(response['result']))
+        backlog = len(response['result'])
+        print('%s %s' % (datetime.now(), backlog))
     sleep(0.5)
