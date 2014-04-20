@@ -13,5 +13,5 @@ while True:
         socket.send(json.dumps({'dump': ['job', None]}))
         response = json.loads(socket.receive())
         backlog = len(response['result'])
-        print('%s %s' % (datetime.now(), backlog))
-    sleep(0.5)
+        print('%s %s' % (datetime.now().strftime('%s'), backlog))
+    sleep(1)
