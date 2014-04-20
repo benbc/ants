@@ -11,4 +11,4 @@ while True:
     with easy_tcp.Socket('localhost', 5555) as socket:
         socket.send(json.dumps({'get': ['job', None]}))
         response = json.loads(socket.receive())
-    sleep(0.3)
+    sleep(0.03)

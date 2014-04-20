@@ -8,7 +8,8 @@ set border 3 # (1, 2, 4, 8) = (bottom, left, top, right)
 set xlabel 'Time'
 set xtics nomirror
 set xdata time
-set timefmt "%s"
+set timefmt "%Y-%m-%dT%H:%M:%S"
+set format x "%M:%.2S"
 
 set ylabel 'Queue'
 set ytics nomirror
